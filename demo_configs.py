@@ -22,32 +22,40 @@ THEME_COLOR_SECONDARY = "#2A7DE1"  # D-Wave blue default #2A7DE1
 
 THUMBNAIL = "static/dwave_logo.svg"
 
-APP_TITLE = "Demo Name"
-MAIN_HEADER = "Demo Name"
+APP_TITLE = "Load Balancing"
+MAIN_HEADER = "Load Balancing"
 DESCRIPTION = """\
-This is a Dash template for new examples. It includes some basic settings, tabs, and styling.
+Virtual machine load balancing is the process of distributing virtual machine workloads across
+a set of hosts in order to balance CPU and memory requirements across hosts, preventing any one
+host from being overloaded. Choose between prioritizing CPU balancing or memory balancing.
 """
+
+RANDOM_SEED = None
+
+# Both caps must be larger than the max hosts.
+MEMORY_CAP = 1026
+MEMORY_UNITS = "GiB"
+CPU_CAP = 167
+CPU_UNITS = "GHz"
 
 #######################################
 # Sliders, buttons and option entries #
 #######################################
 
 # an example slider
-SLIDER = {
-    "min": 1,
-    "max": 10,
+VMS = {
+    "min": 100,
+    "max": 500,
     "step": 1,
-    "value": 5,
+    "value": 100,
 }
 
-# an example dropdown
-DROPDOWN = ["Option 1", "Option 2"]
-
-# an example checklist
-CHECKLIST = ["Option 1", "Option 2"]
-
-# an example radio list
-RADIO = ["Option 1", "Option 2"]
+HOSTS = {
+    "min": 5,
+    "max": 30,
+    "step": 1,
+    "value": 10,
+}
 
 # solver time limits in seconds (value means default)
 SOLVER_TIME = {

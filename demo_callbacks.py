@@ -14,15 +14,16 @@
 
 from __future__ import annotations
 
-from typing import NamedTuple, Union
+from typing import NamedTuple
 
 import dash
-from dash import MATCH, ctx
+import plotly.graph_objs as go
+from dash import ALL, MATCH, ctx
 from dash.dependencies import Input, Output, State
-from dash.exceptions import PreventUpdate
 
-from demo_interface import generate_problem_details_table_rows
-from src.demo_enums import SolverType
+from demo_configs import CPU_CAP, CPU_UNITS, MEMORY_CAP, MEMORY_UNITS
+from src import cqm_balancer, generate_charts, generate_data
+from src.demo_enums import PriorityType
 
 
 @dash.callback(
@@ -53,48 +54,176 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
 
 
 @dash.callback(
-    Output("input", "children"),
+    Output({"type": "graph", "index": ALL}, "className"),
+    Output({"type": "magnifying", "index": ALL}, "className"),
     inputs=[
-        Input("slider", "value"),
+        Input({"type": "magnifying", "index": ALL}, "n_clicks"),
+        State({"type": "graph", "index": ALL}, "className"),
+        State({"type": "magnifying", "index": ALL}, "className"),
     ],
+    prevent_initial_call=True,
 )
-def render_initial_state(slider_value: int) -> str:
-    """Runs on load and any time the value of the slider is updated.
-        Add `prevent_initial_call=True` to skip on load runs.
+def magnify_graph(
+    magnifying: int,
+    graph_classes: list[str],
+    magnifying_classes: list[str],
+) -> tuple[list[str], list[str]]:
+    """Zooms in or out of a graph when the graph's magnifying button is clicked.
 
     Args:
-        slider_value: The value of the slider.
+        magnifying (int): The number of times a magnifying button has been clicked.
+        graph_classes (list[str]): The class names of all the graphs.
+        magnifying_classes (list[str]): The class names of all the magnifying buttons.
 
     Returns:
-        str: The content of the input tab.
+        list[str]: A list of the new graph class names.
+        list[str]: A list of the new magifying button class names.
     """
-    return f"Put demo input here. The current slider value is {slider_value}."
+    triggered_index = ctx.triggered_id["index"]
+
+    if "graph-element-expanded" in graph_classes[triggered_index]:
+        return ["graph-element"] * len(graph_classes), ["magnifying"] * len(magnifying_classes)
+
+    graph_class_names = ["display-none"] * len(graph_classes)
+    mag_class_names = ["display-none"] * len(magnifying_classes)
+
+    graph_class_names[triggered_index] = "graph-element-expanded"
+    mag_class_names[triggered_index] = "magnifying minus"
+
+    return graph_class_names, mag_class_names
+
+
+class RenderInitialStateReturn(NamedTuple):
+    """Return type for the ``render_initial_state`` callback function."""
+
+    fig_mem_percent: go.Figure
+    fig_mem: go.Figure
+    fig_cpu_percent: go.Figure
+    fig_cpu: go.Figure
+    cluster_balance_title: str
+    vms: dict[dict]
+    hosts: dict[dict]
+    cluster_balance_factor: float
+
+
+@dash.callback(
+    Output({"type": "graph", "index": 0}, "figure"),
+    Output({"type": "graph", "index": 1}, "figure"),
+    Output({"type": "graph", "index": 2}, "figure"),
+    Output({"type": "graph", "index": 3}, "figure"),
+    Output("cluster-balance-factor", "children"),
+    Output("vms-store", "data"),
+    Output("hosts-store", "data"),
+    Output("cluster-balance-store", "data"),
+    inputs=[
+        Input("vms", "value"),
+        Input("hosts", "value"),
+        State("priority", "value"),
+    ],
+)
+def render_initial_state(num_vms: int, num_hosts: int, priority: int) -> RenderInitialStateReturn:
+    """Runs on load and any time the value of Virtual Machines or Hosts is updated.
+
+    Args:
+        num_vms (int): The value of the virtual machine slider.
+        num_hosts (int): The value of the host slider.
+        priority (int): The value of the priority selector.
+
+    Returns:
+        fig_mem_percent: The figure for the memory percent graph.
+        fig_mem: The figure for the memory virtual machine graph.
+        fig_cpu_percent: The figure for the CPU percent graph.
+        fig_cpu: The figure for the CPU virtual machine graph.
+        cluster_balance_title: The title displaying the cluster balance factor.
+        vms: The dict of virtual machine dictionaries to store.
+        hosts: The dict of host dictionaries to store.
+        cluster_balance_factor: The cluster balance factor to store.
+    """
+    vms = generate_data.generate_vms(num_vms, num_hosts)
+    hosts = generate_data.generate_hosts(num_hosts, vms)
+
+    cluster_balance_factor = generate_data.calculate_cluster_balance_factor(
+        hosts, PriorityType(priority)
+    )
+
+    df_mem_percent, df_mem = generate_charts.get_df(hosts, vms, "mem")
+    df_cpu_percent, df_cpu = generate_charts.get_df(hosts, vms, "cpu")
+
+    fig_mem_percent = generate_charts.generate_percent_chart(df_mem_percent, "Percent Memory Used")
+    fig_cpu_percent = generate_charts.generate_percent_chart(df_cpu_percent, "Percent CPU Used")
+    fig_mem = generate_charts.generate_vm_bar_chart(
+        df_mem, MEMORY_CAP, f"Memory Usage per VM (max: {MEMORY_CAP} {MEMORY_UNITS})", MEMORY_UNITS
+    )
+    fig_cpu = generate_charts.generate_vm_bar_chart(
+        df_cpu, CPU_CAP, f"CPU Usage per VM (max: {CPU_CAP} {CPU_UNITS})", CPU_UNITS
+    )
+
+    return RenderInitialStateReturn(
+        fig_mem_percent=fig_mem_percent,
+        fig_mem=fig_mem,
+        fig_cpu_percent=fig_cpu_percent,
+        fig_cpu=fig_cpu,
+        cluster_balance_title=f"Cluster Balance Factor: {cluster_balance_factor:.2f}",
+        vms=vms,
+        hosts=hosts,
+        cluster_balance_factor=cluster_balance_factor,
+    )
+
+
+@dash.callback(
+    Output("cluster-balance-factor", "children", allow_duplicate=True),
+    Output("cluster-balance-store", "data", allow_duplicate=True),
+    inputs=[
+        Input("priority", "value"),
+        State("hosts-store", "data"),
+    ],
+    prevent_initial_call=True,
+)
+def update_cluster_balance_factor(priority: int, hosts: dict[dict]) -> tuple[str, float]:
+    """Updates only the cluster balance factor store and title when the priority setting is changed.
+
+    Args:
+        priority (int): The value of the priority selector.
+        num_hosts (int): The value of the host slider.
+
+    Returns:
+        cluster_balance_title: The title displaying the cluster balance factor.
+        cluster_balance_factor: The cluster balance factor to store.
+    """
+    cluster_balance_factor = generate_data.calculate_cluster_balance_factor(
+        hosts, PriorityType(priority)
+    )
+
+    return (
+        f"Cluster Balance Factor: {cluster_balance_factor:.2f}",
+        cluster_balance_factor,
+    )
 
 
 class RunOptimizationReturn(NamedTuple):
     """Return type for the ``run_optimization`` callback function."""
 
-    results: str = dash.no_update
-    problem_details_table: list = dash.no_update
-    # Add more return variables here. Return values for callback functions
-    # with many variables should be returned as a NamedTuple for clarity.
+    fig_mem_percent_result: go.Figure
+    fig_mem_result: go.Figure
+    fig_cpu_percent_result: go.Figure
+    fig_cpu_result: go.Figure
+    cluster_balance_result_title: str
 
 
 @dash.callback(
-    # The Outputs below must align with `RunOptimizationReturn`.
-    Output("results", "children"),
-    Output("problem-details", "children"),
+    Output({"type": "graph", "index": 4}, "figure"),
+    Output({"type": "graph", "index": 5}, "figure"),
+    Output({"type": "graph", "index": 6}, "figure"),
+    Output({"type": "graph", "index": 7}, "figure"),
+    Output("cluster-balance-factor-results", "children"),
     background=True,
     inputs=[
-        # The first string in the Input/State elements below must match an id in demo_interface.py
-        # Remove or alter the following id's to match any changes made to demo_interface.py
         Input("run-button", "n_clicks"),
-        State("solver-type-select", "value"),
         State("solver-time-limit", "value"),
-        State("slider", "value"),
-        State("dropdown", "value"),
-        State("checklist", "value"),
-        State("radio", "value"),
+        State("priority", "value"),
+        State("vms-store", "data"),
+        State("hosts-store", "data"),
+        State("cluster-balance-store", "data"),
     ],
     running=[
         (Output("cancel-button", "className"), "", "display-none"),  # Show/hide cancel button.
@@ -102,21 +231,17 @@ class RunOptimizationReturn(NamedTuple):
         (Output("results-tab", "disabled"), True, False),  # Disables results tab while running.
         (Output("results-tab", "label"), "Loading...", "Results"),
         (Output("tabs", "value"), "input-tab", "input-tab"),  # Switch to input tab while running.
-        (Output("run-in-progress", "data"), True, False),  # Can block certain callbacks.
     ],
     cancel=[Input("cancel-button", "n_clicks")],
     prevent_initial_call=True,
 )
 def run_optimization(
-    # The parameters below must match the `Input` and `State` variables found
-    # in the `inputs` list above.
     run_click: int,
-    solver_type: Union[SolverType, int],
     time_limit: float,
-    slider_value: int,
-    dropdown_value: int,
-    checklist_value: list,
-    radio_value: int,
+    priority: int,
+    vms: dict[dict],
+    hosts: dict[dict],
+    cluster_balance_factor: int,
 ) -> RunOptimizationReturn:
     """Runs the optimization and updates UI accordingly.
 
@@ -127,42 +252,49 @@ def run_optimization(
 
     Args:
         run_click: The (total) number of times the run button has been clicked.
-        solver_type: The solver to use for the optimization run defined by SolverType in demo_enums.py.
         time_limit: The solver time limit.
-        slider_value: The value of the slider.
-        dropdown_value: The value of the dropdown.
-        checklist_value: A list of the values of the checklist.
-        radio_value: The value of the radio.
+        priority: The value of the priority selector.
+        vms: The dict of virtual machine dictionaries to store.
+        hosts: The dict of host dictionaries to store.
+        cluster_balance_factor: The cluster balance factor to store.
 
     Returns:
         A NamedTuple (RunOptimizationReturn) containing all outputs to be used when updating the HTML
         template (in ``demo_interface.py``). These are:
 
-            results: The results to display in the results tab.
-            problem-details: List of the table rows for the problem details table.
+            fig_mem_percent_result: The figure for the memory percent graph.
+            fig_mem_result: The figure for the memory virtual machine graph.
+            fig_cpu_percent_result: The figure for the CPU percent graph.
+            fig_cpu_result: The figure for the CPU virtual machine graph.
+            cluster_balance_result_title: The title displaying the cluster balance factor.
     """
+    priority = PriorityType(priority)
+    cqm = cqm_balancer.build_cqm(vms, hosts, priority)
+    plan = cqm_balancer.get_solution(cqm, time_limit)
 
-    # Only run optimization code if this function was triggered by a click on `run-button`.
-    # Setting `Input` as exclusively `run-button` and setting `prevent_initial_call=True`
-    # also accomplishes this.
-    if run_click == 0 or ctx.triggered_id != "run-button":
-        raise PreventUpdate
+    resulting_hosts, resulting_vms = cqm_balancer.format_results(plan, vms, hosts)
 
-    solver_type = SolverType(solver_type)
+    resulting_balance_factor = generate_data.calculate_cluster_balance_factor(
+        resulting_hosts, priority
+    )
+    improvement = round(resulting_balance_factor - cluster_balance_factor, 2)
 
+    df_mem_percent, df_mem = generate_charts.get_df(resulting_hosts, resulting_vms, "mem")
+    df_cpu_percent, df_cpu = generate_charts.get_df(resulting_hosts, resulting_vms, "cpu")
 
-    ###########################
-    ### YOUR CODE GOES HERE ###
-    ###########################
-
-
-    # Generates a list of table rows for the problem details table.
-    problem_details_table = generate_problem_details_table_rows(
-        solver=solver_type.label,
-        time_limit=time_limit,
+    fig_mem_percent = generate_charts.generate_percent_chart(df_mem_percent, "Percent Memory Used")
+    fig_cpu_percent = generate_charts.generate_percent_chart(df_cpu_percent, "Percent CPU Used")
+    fig_mem = generate_charts.generate_vm_bar_chart(
+        df_mem, MEMORY_CAP, f"Memory Usage per VM (max: {MEMORY_CAP} {MEMORY_UNITS})", MEMORY_UNITS
+    )
+    fig_cpu = generate_charts.generate_vm_bar_chart(
+        df_cpu, CPU_CAP, f"CPU Usage per VM (max: {CPU_CAP} {CPU_UNITS})", CPU_UNITS
     )
 
     return RunOptimizationReturn(
-        results="Put demo results here.",
-        problem_details_table=problem_details_table,
+        fig_mem_percent_result=fig_mem_percent,
+        fig_mem_result=fig_mem,
+        fig_cpu_percent_result=fig_cpu_percent,
+        fig_cpu_result=fig_cpu,
+        cluster_balance_result_title=f"Cluster Balance Factor: {resulting_balance_factor:.2f}, Improvement: {improvement}",
     )

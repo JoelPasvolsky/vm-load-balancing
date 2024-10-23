@@ -19,13 +19,8 @@ This file contains all custom CSS for this demo.
 The following style rules can be altered or removed and any additional
 custom CSS can be added below.
 *******************************************************************/
-
-.tab-content-results {
-    padding: 0 3rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
+.columns-main {
+    height: calc(100vh - var(--banner-height));
 }
 
 .solution-stats-table td:nth-child(2n) {
@@ -38,11 +33,74 @@ custom CSS can be added below.
 
 .input, .results {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
+    height: auto !important;
 }
 
-  /****************************/
- /*** CUSTOM CSS GOES HERE ***/
-/****************************/
+.tab-content {
+    padding: 1rem 3rem;
+    overflow-x: auto;
+}
+
+.graph-element {
+    width: calc(45vw - var(--left-col-width)/2);
+    height: calc((45vw - var(--left-col-width)/2)*0.6);
+}
+
+.graph-element-expanded {
+    width: calc(90vw - var(--left-col-width));
+    height: calc((90vw - var(--left-col-width))*0.6);
+}
+
+.graph-wrapper > div {
+    position: relative;
+}
+
+.magnifying {
+    position: absolute;
+    top: 1.4rem;
+    right: 1.4rem;
+    z-index: 1;
+    cursor: pointer;
+}
+
+.magnifying span:last-child {
+    display: none;
+}
+
+.magnifying.minus span {
+    display: none;
+}
+
+.magnifying.minus span:last-child {
+    display: inline;
+}
+
+.magnifying-lens {
+    border: 2px solid var(--grey);
+    color: var(--grey);
+    border-radius: 50%;
+    height: 1.5rem;
+    width: 1.5rem;
+    line-height: 1.2rem;
+    text-align: center;
+    font-weight: 600;
+    transition: color 0.2s ease-in-out, border 0.2s ease-in-out;
+}
+
+.magnifying-handle {
+    background-color: var(--grey);
+    width: 3px;
+    height: 1rem;
+    border-radius: 2px;
+    transform: rotate(-45deg) translate(15px, 10px);
+    transition: background-color 0.2s ease-in-out;
+}
+
+.magnifying:hover .magnifying-lens {
+    border-color: var(--grey-dark);
+    color: var(--grey-dark);
+}
+
+.magnifying:hover .magnifying-handle {
+    background-color: var(--grey-dark);
+}
