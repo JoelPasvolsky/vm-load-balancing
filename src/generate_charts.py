@@ -86,12 +86,14 @@ def generate_percent_chart(df: pd.DataFrame, title: str = "") -> go.Figure:
 
     fig.update_traces(hovertemplate="%{x:.2f}%")
 
-    mean = df.loc[:, "Percent"].mean()
+    mean = df["Percent"].mean()
+    sd = df["Percent"].std()
+
     fig.add_vline(
         x=mean,
         line_width=2,
         line_color="red",
-        annotation_text=f"mean: {mean:.1f}%",
+        annotation_text=f"mean: {mean:.1f}%, standard deviation: {sd:.1f}",
         line_dash="dash",
         annotation_font_size=13,
         annotation_position="top",
