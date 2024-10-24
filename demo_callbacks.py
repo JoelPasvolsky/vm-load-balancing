@@ -229,7 +229,7 @@ class RunOptimizationReturn(NamedTuple):
         (Output("cancel-button", "className"), "", "display-none"),  # Show/hide cancel button.
         (Output("run-button", "className"), "display-none", ""),  # Hides run button while running.
         (Output("results-tab", "disabled"), True, False),  # Disables results tab while running.
-        (Output("results-tab", "label"), "Loading...", "Results"),
+        (Output("results-tab", "label"), "Loading...", "Updated State"),
         (Output("tabs", "value"), "input-tab", "input-tab"),  # Switch to input tab while running.
     ],
     cancel=[Input("cancel-button", "n_clicks")],

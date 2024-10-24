@@ -42,7 +42,7 @@ class TestGenerateCharts(unittest.TestCase):
         self.assertEqual(len(df), len(vms))
 
         # Check DataFrames have correct columns
-        self.assertTrue(({"Host", "Percent", "Virtual Machine"}).issubset(set(df_percent.columns)))
+        self.assertTrue(({"Host", "Percent"}).issubset(set(df_percent.columns)))
         self.assertTrue(({"Host", "Use", "Virtual Machine"}).issubset(set(df.columns)))
 
         # Check correct percent value

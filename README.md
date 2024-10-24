@@ -1,6 +1,6 @@
 # Load Balancing
 
-Virtual-machine load balancing is the problem of distributing virtual machines in a way that 
+Virtual machine load balancing is the problem of distributing virtual machines in a way that
 evenly balances CPU and memory requirements across a set of hosts, preventing overload
 or under-utilization of host machines. It is a real-world problem for many organizations, 
 including D-Wave.

@@ -251,7 +251,7 @@ def create_interface():
                                         ],
                                     ),
                                     dcc.Tab(
-                                        label="Results",
+                                        label="Updated State",
                                         id="results-tab",
                                         className="tab",
                                         disabled=True,
