@@ -296,5 +296,5 @@ def run_optimization(
         fig_mem_result=fig_mem,
         fig_cpu_percent_result=fig_cpu_percent,
         fig_cpu_result=fig_cpu,
-        cluster_balance_result_title=f"Cluster Balance Factor: {resulting_balance_factor:.2f}, Improvement: {improvement}",
+        cluster_balance_result_title=f"Cluster Balance Factor: {resulting_balance_factor:.2f} (Improvement: {improvement})",
     )

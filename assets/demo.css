@@ -34,6 +34,7 @@ custom CSS can be added below.
 .input, .results {
     display: flex;
     height: auto !important;
+    margin-top: 0.6rem;
 }
 
 .tab-content {
