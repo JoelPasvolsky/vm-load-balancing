@@ -97,12 +97,12 @@ def generate_settings_form() -> html.Div:
         className="settings",
         children=[
             slider(
-                "Virtual Machines",
+                "Number of Virtual Machines",
                 "vms",
                 VMS,
             ),
             slider(
-                "Hosts",
+                "Number of Hosts",
                 "hosts",
                 HOSTS,
             ),

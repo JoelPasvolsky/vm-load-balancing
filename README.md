@@ -1,9 +1,9 @@
 # Load Balancing
 
-Virtual machine load balancing is the process of distributing virtual machine workloads across
-a set of hosts in order to balance CPU and memory requirements across hosts, preventing any one
-host from being overloaded. It is a real world problem that many organizations face, including
-D-Wave.
+Virtual-machine load balancing is the problem of distributing virtual machines in a way that 
+evenly balances CPU and memory requirements across a set of hosts, preventing overload
+or under-utilization of host machines. It is a real-world problem for many organizations, 
+including D-Wave.
 
 ![Demo Example](static/demo.png)
 
@@ -49,9 +49,9 @@ please run the app with the `--debug` command-line argument for live reloads and
 
 **Objective**: To balance the system such that each host has similar memory and CPU demands.
 
-**Constraints**: Each virtual machine can only be assigned to one host and the total resource
-demands on a single host must be less than or equal to the proportional allocation of virtual
-machine resource demands on hosts subject to the host's capacity.
+**Constraints**: (1) Each virtual machine can only be assigned to one host. (2) Total resource
+demands on a single host must be less than or equal to the per-host proportional allocation 
+of capacity.
 
 ## Model Overview
 
@@ -61,28 +61,27 @@ machine resource demands on hosts subject to the host's capacity.
  - Priority: Whether to prioritize balancing CPU or memory.
 
 ### Variables
- - `{vm}_on_{host}`: Binary variable that shows if vm is assigned to host.
+ - `{vm}_on_{host}`: Binary variable that shows if virtual machine is assigned to host.
 
 ### Objective
 Our objective is to assign virtual machines to hosts such that the resource demands for CPU and
 memory are equally distributed between hosts.
 
-The `Priority` setting allows the option to switch between prioritizing balancing CPU or memory. The
-resource chosen as priority will be set as a hard constraint while the other resource will be a
-soft constraint.
+The `Priority` setting enables you to choose between prioritizing CPU or memory balancing. The
+prioritized resource is set as a hard constraint while the other resource is a soft constraint.
 
 ### Constraints
-#### One Host per Virtual Machine Constraint
+#### One Host per Virtual Machine
 Each virtual machine can only be assigned to one host. To accomplish this we use a one-hot
 constraint for discrete `{vm}_on_{host}` variables.
 
-#### Proportional Allocation Constraint
-The sum of CPU requirements and memory demands on a host must be less than or equal to the
-proportionally balanced CPU and memory calculated by taking the host's individual resource capacity
-and multiplying it by the total requested resource (of all virtual machines), divided by the total
-available space across all hosts for that resource.
+#### Proportional Allocation
+The sum of CPU and memory requirements on a host must be less than or equal to the
+proportional allocation of the host. This proportional allocation is that host's resource 
+capacity divided by the total resource capacity of all hosts multiplied by the total demand 
+of all virtual machines.
 
-The priority of which resource (memory or CPU) to balance can be set by the `Balance Priority` which
+The priority between resources (memory or CPU) is set with the `Balance Priority`, which
 switches between hard and soft constraints for the two resources.
 
 

@@ -25,9 +25,9 @@ THUMBNAIL = "static/dwave_logo.svg"
 APP_TITLE = "Load Balancing"
 MAIN_HEADER = "Load Balancing"
 DESCRIPTION = """\
-Virtual machine load balancing is the process of distributing virtual machine workloads across
-a set of hosts in order to balance CPU and memory requirements across hosts, preventing any one
-host from being overloaded. Choose between prioritizing CPU balancing or memory balancing.
+Virtual-machine load balancing is the problem of distributing virtual machines in a way that 
+evenly balances CPU and memory requirements across a set of hosts, preventing overload
+or under-utilization of host machines. 
 """
 
 RANDOM_SEED = None
