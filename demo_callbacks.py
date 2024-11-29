@@ -59,33 +59,43 @@ def toggle_left_column(collapse_trigger: int, to_collapse_class: str) -> str:
     inputs=[
         Input({"type": "magnifying", "index": ALL}, "n_clicks"),
         State({"type": "graph", "index": ALL}, "className"),
-        State({"type": "magnifying", "index": ALL}, "className"),
     ],
     prevent_initial_call=True,
 )
 def magnify_graph(
     magnifying: int,
     graph_classes: list[str],
-    magnifying_classes: list[str],
 ) -> tuple[list[str], list[str]]:
     """Zooms in or out of a graph when the graph's magnifying button is clicked.
 
     Args:
         magnifying (int): The number of times a magnifying button has been clicked.
         graph_classes (list[str]): The class names of all the graphs.
-        magnifying_classes (list[str]): The class names of all the magnifying buttons.
 
     Returns:
         list[str]: A list of the new graph class names.
         list[str]: A list of the new magifying button class names.
     """
     triggered_index = ctx.triggered_id["index"]
+    one_page_count =int(len(graph_classes)/2)
 
-    if "graph-element-expanded" in graph_classes[triggered_index]:
-        return ["graph-element"] * len(graph_classes), ["magnifying"] * len(magnifying_classes)
+    no_update_page = [dash.no_update] * one_page_count
+    display_none_page = ["display-none"] * one_page_count
+    reset_graph_page = ["graph-element"] * one_page_count
+    reset_mag_page = ["magnifying"] * one_page_count
 
-    graph_class_names = ["display-none"] * len(graph_classes)
-    mag_class_names = ["display-none"] * len(magnifying_classes)
+    if triggered_index < one_page_count:  # On first page
+        if "graph-element-expanded" in graph_classes[triggered_index]:
+            return reset_graph_page + no_update_page, reset_mag_page + no_update_page
+
+        graph_class_names = display_none_page + no_update_page
+        mag_class_names = display_none_page + no_update_page
+    else:  # On second page
+        if "graph-element-expanded" in graph_classes[triggered_index]:
+            return no_update_page + reset_graph_page, no_update_page + reset_mag_page
+
+        graph_class_names = no_update_page + display_none_page
+        mag_class_names = no_update_page + display_none_page
 
     graph_class_names[triggered_index] = "graph-element-expanded"
     mag_class_names[triggered_index] = "magnifying minus"
@@ -208,6 +218,7 @@ class RunOptimizationReturn(NamedTuple):
     fig_cpu_percent_result: go.Figure
     fig_cpu_result: go.Figure
     cluster_balance_result_title: str
+    results_tabl_disabled: bool
 
 
 @dash.callback(
@@ -216,6 +227,7 @@ class RunOptimizationReturn(NamedTuple):
     Output({"type": "graph", "index": 6}, "figure"),
     Output({"type": "graph", "index": 7}, "figure"),
     Output("cluster-balance-factor-results", "children"),
+    Output("results-tab", "disabled"),
     background=True,
     inputs=[
         Input("run-button", "n_clicks"),
@@ -228,7 +240,7 @@ class RunOptimizationReturn(NamedTuple):
     running=[
         (Output("cancel-button", "className"), "", "display-none"),  # Show/hide cancel button.
         (Output("run-button", "className"), "display-none", ""),  # Hides run button while running.
-        (Output("results-tab", "disabled"), True, False),  # Disables results tab while running.
+        (Output("results-tab", "disabled"), True, True),  # Disables results tab while running.
         (Output("results-tab", "label"), "Loading...", "Updated State"),
         (Output("tabs", "value"), "input-tab", "input-tab"),  # Switch to input tab while running.
     ],
@@ -267,6 +279,7 @@ def run_optimization(
             fig_cpu_percent_result: The figure for the CPU percent graph.
             fig_cpu_result: The figure for the CPU virtual machine graph.
             cluster_balance_result_title: The title displaying the cluster balance factor.
+            results_tabl_disabled: Whether the results tab should be disabled.
     """
     priority = PriorityType(priority)
     cqm = cqm_balancer.build_cqm(vms, hosts, priority)
@@ -297,4 +310,5 @@ def run_optimization(
         fig_cpu_percent_result=fig_cpu_percent,
         fig_cpu_result=fig_cpu,
         cluster_balance_result_title=f"Cluster Balance Factor: {resulting_balance_factor:.2f} (Improvement: {improvement})",
+        results_tabl_disabled=False,
     )
