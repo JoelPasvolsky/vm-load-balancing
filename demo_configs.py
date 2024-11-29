@@ -32,7 +32,7 @@ or under-utilization of host machines.
 
 RANDOM_SEED = None
 
-# Both caps must be larger than the max hosts.
+# Both caps must be larger than 4 x the max hosts.
 MEMORY_CAP = 1026
 MEMORY_UNITS = "GiB"
 CPU_CAP = 167
