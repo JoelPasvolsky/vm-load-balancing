@@ -30,9 +30,9 @@ def get_df(hosts: dict[dict], vms: dict[dict], resource: str) -> tuple[pd.DataFr
         resource: A string denoting what resource the DF is for (either ``mem`` or ``cpu``).
 
     Returns:
-        pd.DataFrame: A DataFrame containing the percentage of resource used for each host.
-        pd.DataFrame: A DataFrame containing the resource usage for each virtual machine assigned
-            to each host.
+        tuple[pd.DataFrame, pd.DataFrame]: A DataFrame containing the percentage of resource used
+        for each host and a DataFrame containing the resource usage for each virtual machine
+        assigned to each host.
     """
     percentages = []
 

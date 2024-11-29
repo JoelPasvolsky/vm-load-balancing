@@ -22,8 +22,8 @@ THEME_COLOR_SECONDARY = "#2A7DE1"  # D-Wave blue default #2A7DE1
 
 THUMBNAIL = "static/dwave_logo.svg"
 
-APP_TITLE = "Load Balancing"
-MAIN_HEADER = "Load Balancing"
+APP_TITLE = "VM Load Balancing"
+MAIN_HEADER = "VM Load Balancing"
 DESCRIPTION = """\
 Virtual machine load balancing is the problem of distributing virtual machines in a way that
 evenly balances CPU and memory requirements across a set of hosts, preventing overload

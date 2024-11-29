@@ -28,8 +28,8 @@ def format_results(
         hosts: A dict of host dictionaries.
 
     Returns:
-        dict[dict]: The updated host dictionaries.
-        dict[dict]: The updated virtual machine dictionaries.
+        tuple[dict, dict]: The updated host dictionaries and 
+        the updated virtual machine dictionaries.
     """
     for host in hosts:
         hosts[host]["cpu_used"] = 0
