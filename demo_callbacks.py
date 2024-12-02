@@ -77,21 +77,23 @@ def magnify_graph(
         list[str]: A list of the new magifying button class names.
     """
     triggered_index = ctx.triggered_id["index"]
-    one_page_count =int(len(graph_classes)/2)
+    one_page_count = int(len(graph_classes) / 2)
 
     no_update_page = [dash.no_update] * one_page_count
     display_none_page = ["display-none"] * one_page_count
     reset_graph_page = ["graph-element"] * one_page_count
     reset_mag_page = ["magnifying"] * one_page_count
+    is_expanded = "graph-element-expanded" in graph_classes[triggered_index]
+    on_first_page = triggered_index < one_page_count
 
-    if triggered_index < one_page_count:  # On first page
-        if "graph-element-expanded" in graph_classes[triggered_index]:
+    if on_first_page:  # On first page
+        if is_expanded:
             return reset_graph_page + no_update_page, reset_mag_page + no_update_page
 
         graph_class_names = display_none_page + no_update_page
         mag_class_names = display_none_page + no_update_page
     else:  # On second page
-        if "graph-element-expanded" in graph_classes[triggered_index]:
+        if is_expanded:
             return no_update_page + reset_graph_page, no_update_page + reset_mag_page
 
         graph_class_names = no_update_page + display_none_page
