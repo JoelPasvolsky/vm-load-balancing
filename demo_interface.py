@@ -112,7 +112,7 @@ def generate_settings_form() -> html.Div:
                 sorted(priority_options, key=lambda op: op["value"]),
                 0,
             ),
-            html.Label("Solver Time Limit (seconds)"),
+            html.Label("Solver Time Limit (Seconds)"),
             dcc.Input(
                 id="solver-time-limit",
                 type="number",

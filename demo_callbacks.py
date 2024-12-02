@@ -164,10 +164,10 @@ def render_initial_state(num_vms: int, num_hosts: int, priority: int) -> RenderI
     fig_mem_percent = generate_charts.generate_percent_chart(df_mem_percent, "Percent Memory Used")
     fig_cpu_percent = generate_charts.generate_percent_chart(df_cpu_percent, "Percent CPU Used")
     fig_mem = generate_charts.generate_vm_bar_chart(
-        df_mem, MEMORY_CAP, f"Memory Usage per VM (max: {MEMORY_CAP} {MEMORY_UNITS})", MEMORY_UNITS
+        df_mem, MEMORY_CAP, f"Memory Usage per VM (Max: {MEMORY_CAP} {MEMORY_UNITS})", MEMORY_UNITS
     )
     fig_cpu = generate_charts.generate_vm_bar_chart(
-        df_cpu, CPU_CAP, f"CPU Usage per VM (max: {CPU_CAP} {CPU_UNITS})", CPU_UNITS
+        df_cpu, CPU_CAP, f"CPU Usage per VM (Max: {CPU_CAP} {CPU_UNITS})", CPU_UNITS
     )
 
     return RenderInitialStateReturn(
