@@ -1,32 +1,11 @@
-### Interested in contributing a code example?
+# Load Balancing
 
-Please take a look at our [contribution guidelines](CONTRIBUTING.md) before getting started.
-Thank you!
-
-The Dash template is intended for demos that would benefit from a user interface. This user
-interface could include settings to run and customize the problem, an interactive graphical element,
-or tables/charts to compare different solutions. This template is also useful for demos that are
-intended for a general audience, as it is more approachable for those without a technical background.
-
-<!-- Before submitting your code, please delete everything above and including this comment. -->
-<!-- The following is a README template for your new demo. -->
-
-# Demo Name
-
-Describe your demo and specify what it is demonstrating. Consider the
-following questions:
-
-* Is it a canonical problem or a real-world application?
-* Does it belong to a particular domain such as material simulation or logistics?
-* What level of Ocean proficiency does it target: beginner, advanced?
-
-A clear description allows us to properly categorize your demo.
-
-Please include a screenshot of your demo below.
+Virtual machine load balancing is the problem of distributing virtual machines in a way that
+evenly balances CPU and memory requirements across a set of hosts, preventing overload
+or under-utilization of host machines. It is a real-world problem for many organizations, 
+including D-Wave.
 
 ![Demo Example](static/demo.png)
-
-<!-- Below is boilerplate instructions to be included, as is, in the final demo. -->
 
 ## Installation
 You can run this example without installation in cloud-based IDEs that support the
@@ -44,11 +23,11 @@ If you are cloning the repo to your local system, working in a
 
 ## Usage
 Your development environment should be configured to access the
-[Leap&trade; Quantum Cloud Service](https://docs.ocean.dwavesys.com/en/stable/overview/sapi.html).
+[Leap&trade; quantum cloud service](https://docs.ocean.dwavesys.com/en/stable/overview/sapi.html).
 You can see information about supported IDEs and authorizing access to your Leap account
 [here](https://docs.dwavesys.com/docs/latest/doc_leap_dev_env.html).
 
-Run the following terminal command to start the Dash app:
+Run the following terminal command to start the Dash application:
 
 ```bash
 python app.py
@@ -62,61 +41,54 @@ a solver.
 Configuration options can be found in the [demo_configs.py](demo_configs.py) file.
 
 > [!NOTE]\
-> If you plan on editing any files while the app is running,
-please run the app with the `--debug` command-line argument for live reloads and easier debugging:
+> If you plan on editing any files while the application is running, please run the application
+with the `--debug` command-line argument for live reloads and easier debugging:
 `python app.py --debug`
 
-<!-- End of boilerplate. -->
-
 ## Problem Description
-Give an overview of the problem you are solving in this demo.
 
-**Objectives**: define the goal this example attempts to accomplish by minimizing or maximizing
-certain aspects of the problem. For example, a production-line optimization might attempt to
-minimize the time to produce all of the products.
+**Objective**: To balance the system such that each host has similar memory and CPU demands.
 
-**Constraints**: aspects of the problem, with limited or no flexibility, that must be satisfied for
-solutions to be considered feasible. For example, a production-line optimization might have a
-limitation that Machine A can only bend 10 parts per hour.
+**Constraints**: (1) Each virtual machine can only be assigned to one host. (2) Total resource
+demands on a single host must be less than or equal to the per-host proportional allocation 
+of capacity.
 
 ## Model Overview
-The clearer your model is presented here, the more useful it will be to others. For a strong example
-of this section, see [here](https://github.com/dwave-examples/3d-bin-packing#model-overview).
 
 ### Parameters
-List and define the parameters used in your model.
+ - Hosts: Each with an ID, current CPU use, current memory use, CPU capacity, and memory capacity.
+ - Virtual Machines: Each with an ID, CPU requirement, and memory requirement.
+ - Priority: Whether to prioritize balancing CPU or memory.
 
 ### Variables
-List and define (including type: e.g., "binary" or "integer") the variables solved for in your model.
-
-### Expressions
-List and define any combinations of variables used for easier representations of the models.
+ - `{vm}_on_{host}`: Binary variable that shows if virtual machine is assigned to host.
 
 ### Objective
-Mathematical formulation of the objective described in the previous section using the listed
-parameters, variables, etc.
+Our objective is to assign virtual machines to hosts such that the resource demands for CPU and
+memory are equally distributed between hosts.
+
+The `Priority` setting enables you to choose between prioritizing CPU or memory balancing. The
+prioritized resource is set as a hard constraint while the other resource is a soft constraint.
+
+The solution quality can be evaluated by the `cluster balance factor` metric. The cluster balance
+factor is a weighted measure (based on the Priority setting) of how evenly memory and CPU resources
+are distributed across hosts. A higher cluster balance factor (closer to 1) means the system is more
+balanced.
 
 ### Constraints
-Mathematical formulation of the constraints described in the previous section using the listed
-parameters, variables, etc.
+#### One Host per Virtual Machine
+Each virtual machine can only be assigned to one host. To accomplish this we use a one-hot
+constraint for discrete `{vm}_on_{host}` variables.
 
-## Code Overview
+#### Proportional Allocation
+The sum of CPU and memory requirements on a host must be less than or equal to the
+proportional allocation of the host. This proportional allocation is that host's resource 
+capacity divided by the total resource capacity of all hosts multiplied by the total demand 
+of all virtual machines.
 
-A general overview of how the code works.
+The priority between resources (memory or CPU) is set with the `Balance Priority`, which
+switches between hard and soft constraints for the two resources.
 
-Include any notable parts of the code implementation:
-
-* Talk about unusual or potentially difficult parts of the code
-* Explain a code decision
-* Explain how parameters were tuned
-
-Note: there is no need to repeat everything that is already well-documented in
-the code.
-
-## References
-
-A. Person (YEAR), "An Article Title that Helped Formulate the Problem".
-[Link Title](https://example.com/)
 
 ## License
 
