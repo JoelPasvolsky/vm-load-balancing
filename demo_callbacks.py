@@ -112,10 +112,8 @@ class RenderInitialStateReturn(NamedTuple):
     fig_mem: go.Figure
     fig_cpu_percent: go.Figure
     fig_cpu: go.Figure
-    cluster_balance_title: str
     vms: dict[dict]
     hosts: dict[dict]
-    cluster_balance_factor: float
 
 
 @dash.callback(
@@ -123,10 +121,8 @@ class RenderInitialStateReturn(NamedTuple):
     Output({"type": "graph", "index": 1}, "figure"),
     Output({"type": "graph", "index": 2}, "figure"),
     Output({"type": "graph", "index": 3}, "figure"),
-    Output("cluster-balance-factor", "children"),
     Output("vms-store", "data"),
     Output("hosts-store", "data"),
-    Output("cluster-balance-store", "data"),
     inputs=[
         Input("vms", "value"),
         Input("hosts", "value"),
@@ -146,17 +142,11 @@ def render_initial_state(num_vms: int, num_hosts: int, priority: int) -> RenderI
         fig_mem: The figure for the memory virtual machine graph.
         fig_cpu_percent: The figure for the CPU percent graph.
         fig_cpu: The figure for the CPU virtual machine graph.
-        cluster_balance_title: The title displaying the cluster balance factor.
         vms: The dict of virtual machine dictionaries to store.
         hosts: The dict of host dictionaries to store.
-        cluster_balance_factor: The cluster balance factor to store.
     """
     vms = generate_data.generate_vms(num_vms, num_hosts)
     hosts = generate_data.generate_hosts(num_hosts, vms)
-
-    cluster_balance_factor = generate_data.calculate_cluster_balance_factor(
-        hosts, PriorityType(priority)
-    )
 
     df_mem_percent, df_mem = generate_charts.get_df(hosts, vms, "mem")
     df_cpu_percent, df_cpu = generate_charts.get_df(hosts, vms, "cpu")
@@ -175,40 +165,8 @@ def render_initial_state(num_vms: int, num_hosts: int, priority: int) -> RenderI
         fig_mem=fig_mem,
         fig_cpu_percent=fig_cpu_percent,
         fig_cpu=fig_cpu,
-        cluster_balance_title=f"Cluster Balance Factor: {cluster_balance_factor:.2f}",
         vms=vms,
         hosts=hosts,
-        cluster_balance_factor=cluster_balance_factor,
-    )
-
-
-@dash.callback(
-    Output("cluster-balance-factor", "children", allow_duplicate=True),
-    Output("cluster-balance-store", "data", allow_duplicate=True),
-    inputs=[
-        Input("priority", "value"),
-        State("hosts-store", "data"),
-    ],
-    prevent_initial_call=True,
-)
-def update_cluster_balance_factor(priority: int, hosts: dict[dict]) -> tuple[str, float]:
-    """Updates only the cluster balance factor store and title when the priority setting is changed.
-
-    Args:
-        priority (int): The value of the priority selector.
-        num_hosts (int): The value of the host slider.
-
-    Returns:
-        cluster_balance_title: The title displaying the cluster balance factor.
-        cluster_balance_factor: The cluster balance factor to store.
-    """
-    cluster_balance_factor = generate_data.calculate_cluster_balance_factor(
-        hosts, PriorityType(priority)
-    )
-
-    return (
-        f"Cluster Balance Factor: {cluster_balance_factor:.2f}",
-        cluster_balance_factor,
     )
 
 
@@ -219,7 +177,6 @@ class RunOptimizationReturn(NamedTuple):
     fig_mem_result: go.Figure
     fig_cpu_percent_result: go.Figure
     fig_cpu_result: go.Figure
-    cluster_balance_result_title: str
     results_tabl_disabled: bool
 
 
@@ -228,7 +185,6 @@ class RunOptimizationReturn(NamedTuple):
     Output({"type": "graph", "index": 5}, "figure"),
     Output({"type": "graph", "index": 6}, "figure"),
     Output({"type": "graph", "index": 7}, "figure"),
-    Output("cluster-balance-factor-results", "children"),
     Output("results-tab", "disabled"),
     background=True,
     inputs=[
@@ -237,7 +193,6 @@ class RunOptimizationReturn(NamedTuple):
         State("priority", "value"),
         State("vms-store", "data"),
         State("hosts-store", "data"),
-        State("cluster-balance-store", "data"),
     ],
     running=[
         (Output("cancel-button", "className"), "", "display-none"),  # Show/hide cancel button.
@@ -255,7 +210,6 @@ def run_optimization(
     priority: int,
     vms: dict[dict],
     hosts: dict[dict],
-    cluster_balance_factor: int,
 ) -> RunOptimizationReturn:
     """Runs the optimization and updates UI accordingly.
 
@@ -270,7 +224,6 @@ def run_optimization(
         priority: The value of the priority selector.
         vms: The dict of virtual machine dictionaries to store.
         hosts: The dict of host dictionaries to store.
-        cluster_balance_factor: The cluster balance factor to store.
 
     Returns:
         A NamedTuple (RunOptimizationReturn) containing all outputs to be used when updating the HTML
@@ -280,7 +233,6 @@ def run_optimization(
             fig_mem_result: The figure for the memory virtual machine graph.
             fig_cpu_percent_result: The figure for the CPU percent graph.
             fig_cpu_result: The figure for the CPU virtual machine graph.
-            cluster_balance_result_title: The title displaying the cluster balance factor.
             results_tabl_disabled: Whether the results tab should be disabled.
     """
     priority = PriorityType(priority)
@@ -288,11 +240,6 @@ def run_optimization(
     plan = cqm_balancer.get_solution(cqm, time_limit)
 
     resulting_hosts, resulting_vms = cqm_balancer.format_results(plan, vms, hosts)
-
-    resulting_balance_factor = generate_data.calculate_cluster_balance_factor(
-        resulting_hosts, priority
-    )
-    improvement = round(resulting_balance_factor - cluster_balance_factor, 2)
 
     df_mem_percent, df_mem = generate_charts.get_df(resulting_hosts, resulting_vms, "mem")
     df_cpu_percent, df_cpu = generate_charts.get_df(resulting_hosts, resulting_vms, "cpu")
@@ -311,6 +258,5 @@ def run_optimization(
         fig_mem_result=fig_mem,
         fig_cpu_percent_result=fig_cpu_percent,
         fig_cpu_result=fig_cpu,
-        cluster_balance_result_title=f"Cluster Balance Factor: {resulting_balance_factor:.2f} (Improvement: {improvement})",
         results_tabl_disabled=False,
     )
