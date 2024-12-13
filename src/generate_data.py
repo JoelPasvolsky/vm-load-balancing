@@ -114,38 +114,3 @@ def generate_hosts(total_hosts: int, vms: dict[dict]) -> dict[dict]:
         }
 
     return hosts
-
-
-def calculate_cluster_balance_factor(
-    hosts: dict[dict], priority: PriorityType, priority_weight: int = 10
-) -> float:
-    """Calculates the cluster balance factor, which is a metric created to help evaluate
-    the quality of the virtual machine to host assignments.
-
-    Args:
-        hosts: A dict of host dictionaries.
-        priority: Whether to prioritize balancing memory or CPU.
-
-    Returns:
-        float: Cluster balance factor between 0 and 1.0.
-    """
-    if priority is PriorityType.CPU:
-        memory_weight = 1
-        cpu_weight = priority_weight
-    else:
-        memory_weight = priority_weight
-        cpu_weight = 1
-
-    # Calculate the range of memory and CPU usage percentages across hosts
-    memory_usages = [host["mem_used"] / host["mem_cap"] for host in hosts.values()]
-    cpu_usages = [host["cpu_used"] / host["cpu_cap"] for host in hosts.values()]
-
-    memory_range = max(memory_usages) - min(memory_usages)
-    cpu_range = max(cpu_usages) - min(cpu_usages)
-
-    # Calculate the balance factor as the minimum of the memory and CPU range factors (inverted)
-    balance_factor = (((1 - memory_range) * memory_weight) + ((1 - cpu_range) * cpu_weight)) / (
-        cpu_weight + memory_weight
-    )
-
-    return balance_factor

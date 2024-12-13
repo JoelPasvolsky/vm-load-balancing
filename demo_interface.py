@@ -175,7 +175,6 @@ def create_interface():
             # Below are any temporary storage items, e.g., for sharing data between callbacks.
             dcc.Store(id="vms-store"),
             dcc.Store(id="hosts-store"),
-            dcc.Store(id="cluster-balance-store"),
             # Header brand banner
             html.Div(className="banner", children=[html.Img(src=THUMBNAIL)]),
             # Settings and results columns
@@ -226,7 +225,6 @@ def create_interface():
                                         value="input-tab",  # used for switching tabs programatically
                                         className="tab",
                                         children=[
-                                            html.H5(id="cluster-balance-factor"),
                                             dcc.Loading(
                                                 parent_className="input",
                                                 type="circle",
@@ -256,7 +254,6 @@ def create_interface():
                                         className="tab",
                                         disabled=True,
                                         children=[
-                                            html.H5(id="cluster-balance-factor-results"),
                                             dcc.Loading(
                                                 parent_className="results",
                                                 type="circle",

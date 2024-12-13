@@ -66,28 +66,3 @@ class TestGenerateData(unittest.TestCase):
         for host in hosts.values():
             self.assertLessEqual(host["cpu_used"], host["cpu_cap"])
             self.assertLessEqual(host["mem_used"], host["mem_cap"])
-
-    def test_calculate_cluster_balance_factor(self):
-        """Test cluster balance factor calculation"""
-        hosts = {
-            "Host 1": {
-                "processor_type": "CPU",
-                "cpu_used": CPU_CAP / 2,
-                "mem_used": MEMORY_CAP / 2,
-                "cpu_cap": CPU_CAP,
-                "mem_cap": MEMORY_CAP,
-            },
-            "Host 2": {
-                "processor_type": "CPU",
-                "cpu_used": CPU_CAP,
-                "mem_used": MEMORY_CAP,
-                "cpu_cap": CPU_CAP,
-                "mem_cap": MEMORY_CAP,
-            },
-        }
-
-        priority = PriorityType(0)
-
-        cluster_balance_factor = generate_data.calculate_cluster_balance_factor(hosts, priority)
-
-        self.assertEqual(cluster_balance_factor, 0.5)

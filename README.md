@@ -70,11 +70,6 @@ memory are equally distributed between hosts.
 The `Priority` setting enables you to choose between prioritizing CPU or memory balancing. The
 prioritized resource is set as a hard constraint while the other resource is a soft constraint.
 
-The solution quality can be evaluated by the `cluster balance factor` metric. The cluster balance
-factor is a weighted measure (based on the Priority setting) of how evenly memory and CPU resources
-are distributed across hosts. A higher cluster balance factor (closer to 1) means the system is more
-balanced.
-
 ### Constraints
 #### One Host per Virtual Machine
 Each virtual machine can only be assigned to one host. To accomplish this we use a one-hot
